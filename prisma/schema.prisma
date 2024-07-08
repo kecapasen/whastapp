@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Status {
+  id          Int      @id @default(autoincrement())
+  group_id    Int?
+  name        String   @unique @db.VarChar(15)
+  description String?  @db.Text
+  status      Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp()
+  Group       Group?   @relation(fields: [group_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("status")
+}
+
+model Group {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique @db.VarChar(15)
+  description   String?         @db.Text
+  created_at    DateTime        @default(now()) @db.Timestamp()
+  DetailGroup   DetailGroup[]
+  DetailProduct DetailProduct[]
+  Status        Status[]        @relation
+
+  @@map("group")
+}
+
+model DetailGroup {
+  id          Int      @id @default(autoincrement())
+  group_id    Int
+  number      String   @unique @db.VarChar(30)
+  description String?  @db.Text
+  created_at  DateTime @default(now()) @db.Timestamp()
+  Group       Group    @relation(fields: [group_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("detail_group")
+}
+
+model Admin {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  number     String   @unique @db.VarChar(30)
+  created_at DateTime @default(now()) @db.Timestamp()
+
+  @@map("admin")
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  number     String   @unique @db.VarChar(30)
+  ticket     String   @db.Char(6)
+  created_at DateTime @default(now()) @db.Timestamp()
+
+  @@map("customer")
+}
+
+model Product {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(100)
+  description   String?         @db.Text
+  status        Boolean         @default(true)
+  created_at    DateTime        @default(now()) @db.Timestamp()
+  DetailProduct DetailProduct[]
+
+  @@map("product")
+}
+
+model DetailProduct {
+  id         Int      @id @default(autoincrement())
+  product_id Int
+  group_id   Int
+  price      Int      @db.Integer
+  quantity   Int      @db.Integer
+  created_at DateTime @default(now()) @db.Timestamp()
+  Group      Group    @relation(fields: [group_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Product    Product  @relation(fields: [product_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("detail_product")
+}
